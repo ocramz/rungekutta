@@ -60,10 +60,8 @@ auxiliary non-adaptive solvers (error estimators from the adaptive ones):
 use rk4[ab] if you don't need an adaptive solver, rkdp or rkv65 if you do;
 or use what you need if you're an expert.
 
-DO NOT USE rkfe EXCEPT FOR DEMONSTRATIONS OF INSTABILITY!
+N.B. : DO NOT USE `rkfe` EXCEPT FOR DEMONSTRATIONS OF INSTABILITY!
 (Or if you're an expert.)
-
-All integration methods have the same type signature, to facilitate experimentation.
 
 
 Reference: E. Hairer, S. P. Norsett, G. Wanner,
@@ -139,7 +137,7 @@ gen_ks ksum_fn sum_fn der_fn h old@(tn,yn) ks (c:cs) (a:as) =
   gen_ks ksum_fn sum_fn der_fn h old (ks ++ [der_fn (tn + c*h)
           (if null ks then yn else sum_fn yn (ksum_fn a ks))]) cs as
 
--- This is the first core routine: it does not get exported,
+-- | This is the first core routine: it does not get exported,
 -- only partial applications of it; see below.
 --
 -- Its arguments are:
@@ -158,7 +156,6 @@ gen_ks ksum_fn sum_fn der_fn h old@(tn,yn) ks (c:cs) (a:as) =
 --   current state (T,Y) ::
 --	(Double, a)
 --   and the return value is the new state (T_new,Y_new)
-
 core1 ::
   [Double] -> [RCL] -> RCL -> (Double -> a -> a) ->
   (a -> a -> a) -> (Double -> a -> a) -> Double -> (Double, a) -> (Double, a)
@@ -166,12 +163,11 @@ core1 cl al bl sc_fn sum_fn der_fn h old@(tn,yn) =
   let ksum = k_sum sc_fn sum_fn h
   in (tn + h, sum_fn yn (ksum bl (gen_ks ksum sum_fn der_fn h old [] cl al)))
 
--- This is the second core routine, analogous to the previous one.
+-- | This is the second core routine, analogous to the previous one.
 -- The difference is that this gets an additional internal table arg,
 -- and it returns a 3-tuple instead of a 2-tuple: (tnew,ynew,enew),
 -- where enew is the error state vector
 -- e_{n+1} = h sum_{i=1}^s (b_i - b'_i) k_i
-
 core2 ::
   [Double] -> [RCL] -> RCL -> RCL -> (Double -> a -> a) ->
   (a -> a -> a) -> (Double -> a -> a) -> Double -> (Double, a) ->
@@ -201,9 +197,7 @@ rk_show2 title cs as bs ds =
 
 
 
-cs_fe = ratToDbls [0]
-as_fe = ratToRCLs [[]]
-bs_fe = ratToRCL  [1]
+
 -- | forward Euler: unconditionally unstable: don't use this!
 -- If you do, your dangly bits will fall off!
 rkfe
@@ -214,7 +208,11 @@ rkfe
      -> (Double, a) -- ^ current state (t, Y)
      -> (Double, a) -- ^ new state (t_new, Y_new)
 rkfe = core1 cs_fe as_fe bs_fe
+show_rkfe :: String
 show_rkfe = rk_show1 "Forward Euler" cs_fe as_fe bs_fe
+cs_fe = ratToDbls [0]
+as_fe = ratToRCLs [[]]
+bs_fe = ratToRCL  [1]
 
 -- | Kutta's third-order method
 rk3
@@ -225,6 +223,7 @@ rk3
      -> (Double, a) -- ^ current state (t, Y)
      -> (Double, a) -- ^ new state (t_new, Y_new)
 rk3 = core1 cs_rk3 as_rk3 bs_rk3
+show_rk3 :: String
 show_rk3 = rk_show1 "Kutta\'s third-order method" cs_rk3 as_rk3 bs_rk3
 cs_rk3 = ratToDbls [0, 1%2, 1]
 as_rk3 = ratToRCLs [[], [1%2], [-1, 2]]
@@ -239,6 +238,7 @@ rk4a
      -> (Double, a) -- ^ current state (t, Y)
      -> (Double, a) -- ^ new state (t_new, Y_new)
 rk4a = core1 cs_rk4a as_rk4a bs_rk4a
+show_rk4a :: String
 show_rk4a = rk_show1 "Classic fourth-order method" cs_rk4a as_rk4a bs_rk4a
 cs_rk4a = ratToDbls [0, 1%2, 1%2, 1]
 as_rk4a = ratToRCLs [[], [1%2], [0, 1%2], [0, 0, 1]]
@@ -255,6 +255,7 @@ rk4b
      -> (Double, a) -- ^ current state (t, Y)
      -> (Double, a) -- ^ new state (t_new, Y_new)
 rk4b = core1 cs_rk4b as_rk4b bs_rk4b
+show_rk4b :: String
 show_rk4b = rk_show1 "Kutta's other classic fourth-order method" cs_rk4b as_rk4b bs_rk4b
 cs_rk4b = ratToDbls [0, 1%3, 2%3, 1]
 as_rk4b = ratToRCLs [[], [1%3], [-1%3, 1], [1, -1, 1]]
@@ -285,6 +286,7 @@ rkhe
      -> (Double, a) -- ^ current state (t, Y)
      -> (Double, a, a) -- ^ new state (t_new, Y_new, e_new)
 rkhe = core2 cs_he as_he bs_he ds_he
+show_rkhe :: String
 show_rkhe = rk_show2 "Heun-Euler 2(1)" cs_he as_he bs_he ds_he
 cs_he = ratToDbls [0, 1]
 as_he = ratToRCLs [[], [1]]
@@ -309,6 +311,7 @@ rkbs
      -> (Double, a) -- ^ current state (t, Y)
      -> (Double, a, a) -- ^ new state (t_new, Y_new, e_new)
 rkbs = core2 cs_bs as_bs bs_bs ds_bs
+show_rkbs :: String
 show_rkbs = rk_show2 "Bogacki-Shampine 3(2)" cs_bs as_bs bs_bs ds_bs
 cs_bs = ratToDbls [0, 1%2, 3%4, 1]
 as_bs = ratToRCLs [[], [1%2], [0, 3%4], [2%9, 1%3, 4%9]]
@@ -332,6 +335,7 @@ rkf45
      -> (Double, a) -- ^ current state (t, Y)
      -> (Double, a, a) -- ^ new state (t_new, Y_new, e_new)
 rkf45 = core2 cs_rkf as_rkf bs_rkf ds_rkf
+show_rkf45 :: String
 show_rkf45 = rk_show2 "Runge-Kutta-Fehlberg 4(5)" cs_rkf as_rkf bs_rkf ds_rkf
 cs_rkf = ratToDbls [0, 1%4, 3%8, 12%13, 1, 1%2]
 as_rkf = ratToRCLs [[],
@@ -364,6 +368,7 @@ rkck
      -> (Double, a) -- ^ current state (t, Y)
      -> (Double, a, a) -- ^ new state (t_new, Y_new, e_new)
 rkck = core2 cs_ck as_ck bs_ck ds_ck
+show_rkck :: String
 show_rkck = rk_show2 "Cash-Karp 4(5)" cs_ck as_ck bs_ck ds_ck
 cs_ck = ratToDbls [0, 1%5, 3%10, 3%5, 1, 7%8]
 as_ck = ratToRCLs [[],
@@ -397,6 +402,7 @@ rkdp
      -> (Double, a) -- ^ current state (t, Y)
      -> (Double, a, a) -- ^ new state (t_new, Y_new, e_new)
 rkdp = core2 cs_dp as_dp bs_dp ds_dp
+show_rkdp :: String
 show_rkdp = rk_show2 "Dormand-Prince 5(4) \"DOPRI5\"" cs_dp as_dp bs_dp ds_dp
 cs_dp = ratToDbls [0, 1%5, 3%10, 4%5, 8%9, 1, 1]
 as_dp = ratToRCLs [[],
@@ -437,6 +443,7 @@ rkf78
      -> (Double, a) -- ^ current state (t, Y)
      -> (Double, a, a ) -- ^ new state (t_new, Y_new, e_new)
 rkf78 = core2 cs_f78 as_f78 bs_f78 ds_f78
+show_rkf78 :: String
 show_rkf78 = rk_show2 "Fehlberg 7(8)" cs_f78 as_f78 bs_f78 ds_f78
 cs_f78 = ratToDbls [0, 2%27, 1%9, 1%6, 5%12, 1%2, 5%6, 1%6, 2%3, 1%3, 1, 0, 1]
 as_f78 =
@@ -468,7 +475,7 @@ show_rkf78_aux = rk_show1 "Fehlberg (8)" cs_f78 as_f78 bs_f78_aux
 
 
 
--- | Verner, order 6/5 "DVERK"
+-- | Verner, order 6/5 (DVERK)
 rkv65
   :: (Double -> a -> a) -- ^ scale function to scale a Y state vector
      -> (a -> a -> a) -- ^ sum function to add two Y state vectors
