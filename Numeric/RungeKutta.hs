@@ -4,7 +4,7 @@
 {-|
 Module      : Numeric.RungeKutta
 Description : Runge-Kutta integration of ODEs
-Copyright   : (c) Uwe Hollerbach, uh@alumni.caltech.edu, 2019
+Copyright   : (c) Uwe Hollerbach, uh@alumni.caltech.edu, 2009
                   Marco Zocca, 2022
 License     : BSD-3
 Maintainer  : ocramz
@@ -216,7 +216,14 @@ rkfe
 rkfe = core1 cs_fe as_fe bs_fe
 show_rkfe = rk_show1 "Forward Euler" cs_fe as_fe bs_fe
 
--- | Kutta's third-order method:
+-- | Kutta's third-order method
+rk3
+  :: (Double -> a -> a) -- ^ scale function to scale a Y state vector
+     -> (a -> a -> a) -- ^ sum function to add two Y state vectors
+     -> (Double -> a -> a) -- ^ derivative function F
+     -> Double -- ^ step size H
+     -> (Double, a) -- ^ current state (t, Y)
+     -> (Double, a) -- ^ new state (t_new, Y_new)
 rk3 = core1 cs_rk3 as_rk3 bs_rk3
 show_rk3 = rk_show1 "Kutta\'s third-order method" cs_rk3 as_rk3 bs_rk3
 cs_rk3 = ratToDbls [0, 1%2, 1]

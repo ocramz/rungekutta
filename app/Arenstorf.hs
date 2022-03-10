@@ -19,8 +19,8 @@
 -- operator: all very trivial functions.
 
 module Main where
-import System
-import System.IO
+
+import System.IO (hPutStrLn, hPutStr, stderr)
 
 import Numeric.RungeKutta
 
@@ -51,10 +51,10 @@ oracle :: Double -> AState -> Either Double Double
 oracle h (x1,v1,x2,v2) =
   let e = (abs x1) + (abs v1) + (abs x2) + (abs v2)
   in if e < 0.5*tol
-        then Right (1.414*h)		-- step too small, accept but grow
+        then Right (1.414*h) -- step too small, accept but grow
         else if e < tol
-             then Right h		-- step just right
-             else Left (0.5*h)		-- step too large, reject and shrink
+             then Right h -- step just right
+             else Left (0.5*h) -- step too large, reject and shrink
 
 show_pos t (x1,v1,x2,v2) = (show t) ++ " " ++ (show x1) ++ " " ++ (show x2)
 show_st  t (x1,v1,x2,v2) = (show t) ++ " " ++ (show x1) ++ " " ++ (show x2)
@@ -97,6 +97,6 @@ gen_start = return start2
 tol = 1.0e-9
 shower = show_rkf78
 stepper = rkf78 scaler summer deriv
-step = 100.0		-- initial step guaranteed to fail!
+step = 100.0 -- initial step guaranteed to fail!
 
 main = hPutStrLn stderr shower >> gen_start >>= (gen_soln step 0.0)
